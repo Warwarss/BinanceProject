@@ -87,7 +87,7 @@ def check_buy_sell_signals(df):
             in_position = True
             long_position= True
             short_position= False
-        if in_position and short_position
+        if in_position and short_position:
            print("Getting out of Short, Entering Long")
            order2=client.futures_cancel_all_open_orders
            client.futures_create_order(symbol=market,side="BUY",positionSide = "LONG",type="MARKET",quantity=1000,reduceOnly="True")
@@ -100,7 +100,7 @@ def check_buy_sell_signals(df):
             print("already in position, nothing to do")
     
     if df['in_uptrend'][previous_row_index] and not df['in_uptrend'][last_row_index]:
-        if in_position and long_position
+        if in_position and long_position:
             print("Getting out of long, Entering Short")
             order2=client.futures_cancel_all_open_orders
             client.futures_create_order(symbol=market,side="SELL",positionSide = "SHORT",type="MARKET",quantity=1000,reduceOnly="True")
