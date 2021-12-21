@@ -11,8 +11,9 @@ from datetime import datetime
 import time
 global leveragee
 global amt
-market="XRPUSDT"
-amt=25
+market=input ( "Enter the desired market:" )
+amt=input("Enter the desired quantity of tokens you want to buy/sell in each position:")
+float(amt)
 #kaldıraçı aşağıdan bir daha ayarlaman gerek
 leverage=5
 in_position = False
