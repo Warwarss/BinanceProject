@@ -59,7 +59,7 @@ def supertrend(df, period=7, atr_multiplier=3):
     return df
 
 def check_if_enough_margin(last_close):
-    client=Client("XTqAXlterd1bqZNTexXeLvErqESv40wa5K5cqNx9S7ggrsSvXLfQDsvsV9sk5xwx","lz2z7939lsSY4Ofuep66zI2U5e1ta9EcREmrng7xDX8QmK1DfXlpw02Yu1NULkL4", {"timeout": 40})    
+    client=Client("public_api_key","secret_api_key", {"timeout": 40})    
     a=client.futures_account_balance()
     maximum=float(a[6]["balance"])/last_close*leverage
     if amt>maximum:
@@ -88,7 +88,7 @@ def check_buy_sell_signals(df):
         check_if_enough_margin(data["close"][current])
         if not in_position:
             print("Getting into Long position")
-            client=Client("XTqAXlterd1bqZNTexXeLvErqESv40wa5K5cqNx9S7ggrsSvXLfQDsvsV9sk5xwx","lz2z7939lsSY4Ofuep66zI2U5e1ta9EcREmrng7xDX8QmK1DfXlpw02Yu1NULkL4", {"timeout": 40})
+            client=Client("public_api_key","secret_api_key", {"timeout": 40})
             client.futures_cancel_all_open_orders(symbol=market)
             order = client.futures_create_order(symbol=market,side="BUY",positionSide = "LONG",type="MARKET",quantity=amt)
             stop_loss = client.futures_create_order(symbol=market,side='SELL',type='STOP_MARKET',quantity = amt,positionSide = "LONG",stopPrice =round(data["lowerband"][current],4) , closePosition = True)
@@ -100,7 +100,7 @@ def check_buy_sell_signals(df):
             long_position= True
             short_position= False
         if in_position and short_position:
-           client=Client("XTqAXlterd1bqZNTexXeLvErqESv40wa5K5cqNx9S7ggrsSvXLfQDsvsV9sk5xwx","lz2z7939lsSY4Ofuep66zI2U5e1ta9EcREmrng7xDX8QmK1DfXlpw02Yu1NULkL4", {"timeout": 40})
+           client=Client"public_api_key","secret_api_key", {"timeout": 40})
            print("Getting out of Short, Entering Long")
            client.futures_cancel_all_open_orders(symbol=market)
            a=client.futures_position_information(symbol=market)
@@ -121,7 +121,7 @@ def check_buy_sell_signals(df):
         check_if_enough_margin(data["close"][current])
         print("Changed to Downtrend")
         if in_position and long_position:
-            client=Client("XTqAXlterd1bqZNTexXeLvErqESv40wa5K5cqNx9S7ggrsSvXLfQDsvsV9sk5xwx","lz2z7939lsSY4Ofuep66zI2U5e1ta9EcREmrng7xDX8QmK1DfXlpw02Yu1NULkL4", {"timeout": 40})  
+            client=Client("public_api_key","secret_api_key", {"timeout": 40})  
             print("Getting out of long, Entering Short")
             client.futures_cancel_all_open_orders(symbol=market)
             a=client.futures_position_information(symbol=market)
@@ -136,7 +136,7 @@ def check_buy_sell_signals(df):
 
         if not in_position and not short_position:
             print("Getting into short position")
-            client=Client("XTqAXlterd1bqZNTexXeLvErqESv40wa5K5cqNx9S7ggrsSvXLfQDsvsV9sk5xwx","lz2z7939lsSY4Ofuep66zI2U5e1ta9EcREmrng7xDX8QmK1DfXlpw02Yu1NULkL4", {"timeout": 40})
+            client=Client("public_api_key","secret_api_key", {"timeout": 40})
             client.futures_cancel_all_open_orders(symbol=market)
             order = client.futures_create_order(symbol=market,side="SELL",positionSide = "SHORT",type="MARKET",quantity=amt)
             stop_loss=client.futures_create_order(symbol=market,side="BUY",type="STOP_MARKET",quantity=amt,positionSide="SHORT",stopPrice=round(data["upperband"][current],4),closePosition=True)
@@ -149,7 +149,7 @@ def check_buy_sell_signals(df):
 
 def run_bot():
     print(f"Fetching new bars for {datetime.now().isoformat()}")
-    client=Client("XTqAXlterd1bqZNTexXeLvErqESv40wa5K5cqNx9S7ggrsSvXLfQDsvsV9sk5xwx","lz2z7939lsSY4Ofuep66zI2U5e1ta9EcREmrng7xDX8QmK1DfXlpw02Yu1NULkL4", {"timeout": 40})
+    client=Client("public_api_key","secret_api_key", {"timeout": 40})
     bars = client.get_klines(symbol=market, interval=Client.KLINE_INTERVAL_1MINUTE)
     for x in bars:
         del x[6:12]
