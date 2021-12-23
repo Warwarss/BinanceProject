@@ -10,6 +10,7 @@ warnings.filterwarnings('ignore')
 import numpy as np
 from datetime import datetime
 import time
+import requests
 global leveragee
 global amt
 market=input ( "Enter the desired market:" )
@@ -73,22 +74,28 @@ def check_if_enough_margin(last_close,amt):
         print("Margin remain same")
     return amt
 
-
+def failsafe(upperband,lowerband,markprice):
+    if in_position:
+        if markprice>upperband and short_position:
+            client.futures_create_order(symbol=market,side="BUY",positionSide = "SHORT",type="MARKET",quantity=1000)
+        if markprice<lowerband and long_position:
+            client.futures_create_order(symbol=market,side="SELL",positionSide = "LONG",type="MARKET",quantity=1000)
+            
 def check_buy_sell_signals(df,amt):
     global in_position
     global short_position
     global long_position
+    client=Client(config.public_key,config.secret_key, {"timeout": 40})
+    mark_price=client.futures_mark_price(symbol=market)
+    mark_price=float(mark_price["markPrice"])
     data=supertrend(df)
     for current in range(1, len(data.index)):
         previous = current - 1
-    
-    print("checking for buy and sell signals")
-    print(df.tail(5))
     last_row_index = len(df.index) - 2
     previous_row_index = last_row_index - 1
-    client=Client(config.public_key,config.secret_key, {"timeout": 40})
-    mark_price=client.futures_mark_price(symbol=market)
-    mark_price=float(mark_price["indexPrice"])
+    failsafe(data["upperband"][last_row_index],data["lowerband"][last_row_index],mark_price)    
+    print("checking for buy and sell signals")
+    print(df.tail(5))
     print(mark_price)
     if not df['in_uptrend'][previous_row_index] and df['in_uptrend'][last_row_index]:
         print("Changed to uptrend")
@@ -98,7 +105,7 @@ def check_buy_sell_signals(df,amt):
             client=Client(config.public_key,config.secret_key, {"timeout": 40})
             client.futures_cancel_all_open_orders(symbol=market)
             order = client.futures_create_order(symbol=market,side="BUY",positionSide = "LONG",type="MARKET",quantity=amt)
-            stop_loss = client.futures_create_order(symbol=market,side='SELL',type='STOP_MARKET',quantity = amt,positionSide = "LONG",stopPrice =round(data["lowerband"][last_row_index],4) , closePosition = True)
+            stop_loss = client.futures_create_order(symbol=market,side='SELL',type='STOP_MARKET',quantity = amt,positionSide = "LONG",stopPrice =round(data["lowerband"][current],4) , closePosition = True)
             order_take = client.futures_create_order(symbol=market,side='SELL', type='TAKE_PROFIT_MARKET',quantity = amt,positionSide = "LONG", stopPrice =round(mark_price*1.0045,4) ,closePosition=True)
             loss=stop_loss["orderId"]
             profit=order_take["orderId"]
@@ -111,10 +118,10 @@ def check_buy_sell_signals(df,amt):
            print("Getting out of Short, Entering Long")
            client.futures_cancel_all_open_orders(symbol=market)
            a=client.futures_position_information(symbol=market)
-           #if float(a[2]["positionAmt"])>0:
-           client.futures_create_order(symbol=market,side="BUY",positionSide = "SHORT",type="MARKET",quantity=1000)
+           if float(a[2]["positionAmt"])<0:
+               client.futures_create_order(symbol=market,side="BUY",positionSide = "SHORT",type="MARKET",quantity=1000)
            order = client.futures_create_order(symbol=market,side="BUY",positionSide = "LONG",type="MARKET",quantity=amt)
-           stop_loss = client.futures_create_order(symbol=market,side='SELL',type='STOP_MARKET',quantity = amt,positionSide = "LONG",stopPrice =round(data["lowerband"][last_row_index],4) , closePosition = True)
+           stop_loss = client.futures_create_order(symbol=market,side='SELL',type='STOP_MARKET',quantity = amt,positionSide = "LONG",stopPrice =round(data["lowerband"][current],4) , closePosition = True)
            order_take = client.futures_create_order(symbol=market,side='SELL', type='TAKE_PROFIT_MARKET',quantity = amt,positionSide = "LONG", stopPrice =round(mark_price*1.0045,4) ,closePosition=True)
            loss=stop_loss["orderId"]
            profit=order_take["orderId"]
@@ -132,11 +139,11 @@ def check_buy_sell_signals(df,amt):
             print("Getting out of long, Entering Short")
             client.futures_cancel_all_open_orders(symbol=market)
             a=client.futures_position_information(symbol=market)
-            #if float(a[1]["positionAmt"])>0:
-            client.futures_create_order(symbol=market,side="SELL",positionSide = "LONG",type="MARKET",quantity=1000)
+            if float(a[1]["positionAmt"])>0:
+                client.futures_create_order(symbol=market,side="SELL",positionSide = "LONG",type="MARKET",quantity=1000)
             order = client.futures_create_order(symbol=market,side="SELL",positionSide = "SHORT",type="MARKET",quantity=amt)
             order_take=client.futures_create_order(symbol=market,side="BUY",type="TAKE_PROFIT_MARKET",quantity=amt,positionSide="SHORT",stopPrice=round(mark_price*0.9955,4),closePosition=True)
-            stop_loss=client.futures_create_order(symbol=market,side="BUY",type="STOP_MARKET",quantity=amt,positionSide="SHORT",stopPrice=round(data["upperband"][last_row_index],4),closePosition=True)
+            stop_loss=client.futures_create_order(symbol=market,side="BUY",type="STOP_MARKET",quantity=amt,positionSide="SHORT",stopPrice=round(data["upperband"][current],4),closePosition=True)
             in_position = True
             long_position= False
             short_position= True
@@ -146,7 +153,7 @@ def check_buy_sell_signals(df,amt):
             client=Client(config.public_key,config.secret_key, {"timeout": 40})
             client.futures_cancel_all_open_orders(symbol=market)
             order = client.futures_create_order(symbol=market,side="SELL",positionSide = "SHORT",type="MARKET",quantity=amt)
-            stop_loss=client.futures_create_order(symbol=market,side="BUY",type="STOP_MARKET",quantity=amt,positionSide="SHORT",stopPrice=round(data["upperband"][last_row_index],4),closePosition=True)
+            stop_loss=client.futures_create_order(symbol=market,side="BUY",type="STOP_MARKET",quantity=amt,positionSide="SHORT",stopPrice=round(data["upperband"][current],4),closePosition=True)
             order_take=client.futures_create_order(symbol=market,side="BUY",type="TAKE_PROFIT_MARKET",quantity=amt,positionSide="SHORT",stopPrice=round(mark_price*0.9955,4),closePosition=True)
             in_position= True
             short_position=True
@@ -157,17 +164,18 @@ def check_buy_sell_signals(df,amt):
 def run_bot():
     print(f"Fetching new bars for {datetime.now().isoformat()}")
     client=Client(config.public_key,config.secret_key, {"timeout": 40})
-    bars = client.get_klines(symbol=market, interval=Client.KLINE_INTERVAL_1MINUTE)
+    bars = client.futures_klines(symbol=market, interval=Client.KLINE_INTERVAL_1MINUTE)
     for x in bars:
         del x[6:12]
     df = pd.DataFrame(bars, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume',], dtype=float)
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
     supertrend_data = supertrend(df)
     check_buy_sell_signals(supertrend_data,amt)
-    client.futures_change_leverage(symbol=market,leverage=5 )
+    #client.futures_change_leverage(symbol=market,leverage=5 )
 
 
-schedule.every(5).seconds.do(run_bot)
+
+schedule.every(2).seconds.do(run_bot)
 #client=Client("XTqAXlterd1bqZNTexXeLvErqESv40wa5K5cqNx9S7ggrsSvXLfQDsvsV9sk5xwx","lz2z7939lsSY4Ofuep66zI2U5e1ta9EcREmrng7xDX8QmK1DfXlpw02Yu1NULkL4", {"timeout": 40})
 #bars = client.get_klines(symbol=market, interval=Client.KLINE_INTERVAL_1MINUTE)
 #for x in bars:
