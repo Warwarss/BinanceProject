@@ -211,8 +211,8 @@ def run_bot():
 
 
 schedule.every(2).seconds.do(run_bot)
-#client=Client("XTqAXlterd1bqZNTexXeLvErqESv40wa5K5cqNx9S7ggrsSvXLfQDsvsV9sk5xwx","lz2z7939lsSY4Ofuep66zI2U5e1ta9EcREmrng7xDX8QmK1DfXlpw02Yu1NULkL4", {"timeout": 40})
-#bars = client.get_klines(symbol=market, interval=Client.KLINE_INTERVAL_1MINUTE)
+#client=Client("","", {"timeout": 40})
+#bars = client.get_klines(symbol=market, interval=Client.KLINE_INTERVAL_1MINUTE
 #for x in bars:
 #    del x[6:12]
 #df = pd.DataFrame(bars[:-1], columns=['timestamp', 'open', 'high', 'low', 'close', 'volume',], dtype=float)
